@@ -20,22 +20,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.4.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.junit.vintage</groupId>
-                    <artifactId>junit-vintage-engine</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -50,6 +49,14 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>internal.repo</id>
+            <name>Local Staging Repository</name>
+            <url>file://${project.build.directory}/mvn-repo</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
@@ -68,6 +75,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.3.7.RELEASE</version>
                 <configuration>
+                    <skip>true</skip>
                     <mainClass>com.github.file.FileApplication</mainClass>
                 </configuration>
                 <executions>
@@ -76,6 +84,53 @@
                         <goals>
                             <goal>repackage</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--源码-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--github上传插件,用于修改后的发布,执行 mvn clean deploy 自动打包上传到github-->
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version >0.12</version>
+                <configuration>
+                    <message >1.0.0</message>
+                    <noJekyll>true</noJekyll>
+                    <!--本地jar地址-->
+                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
+                    <!--分支-->
+                    <branch>refs/heads/master</branch>
+                    <merge>true</merge>
+                    <server>github</server>
+                    <includes>
+                        <include>**/*</include>
+                    </includes>
+                    <!--对应github上创建的仓库名称 name-->
+                    <repositoryName>mvn-repo</repositoryName>
+                    <!--github 仓库所有者 不是账号-->
+                    <repositoryOwner>originalblackhole</repositoryOwner>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>deploy</phase>
                     </execution>
                 </executions>
             </plugin>
